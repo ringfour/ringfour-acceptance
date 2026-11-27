@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ringfour-acceptance"
+version = "0.1.0"
+description = "Local acceptance control room for Ringfour"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ringfour-acceptance = "ringfour_acceptance.__main__:main"
+
+[tool.setuptools.package-data]
+ringfour_acceptance = ["static/*", "static/fonts/*", "fixtures/*.py"]

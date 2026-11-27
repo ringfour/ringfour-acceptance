@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Ringfour Development</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/campaigns.js" defer></script></head>
+<body>
+<header><a class="brand" href="/" aria-label="Ringfour Development home"><span class="mark" aria-hidden="true">r⁴</span><span>ringfour <b>development</b></span></a><span class="local">Local control room</span></header>
+<main>
+<div class="page-title"><div><p class="eyebrow">Local development</p><h1>Development control panel</h1><p class="intro">Manage virtual stacks, inspect devices, and run checks.</p></div><div id="connection" role="status">Connecting…</div></div>
+<nav aria-label="Acceptance pages"><button class="tab" data-page="campaigns">AP tests</button><button class="tab" data-page="runs">Runs <span id="run-count">0</span></button><button class="tab" data-page="setup">Setup <span id="worker-count">0</span></button><button class="tab active" data-page="virtual">Stacks</button></nav>
+<p id="error" class="notice error" role="alert" hidden></p>
+<section id="campaigns-page" hidden>
+<div class="section-heading"><div><h2>AP acceptance campaigns</h2><p class="muted">Save your test environment once. Run the same versioned checks against each build.</p></div><button id="new-environment">New environment</button></div>
+<section class="panel environment-guide" aria-labelledby="environment-guide-title">
+<h2 id="environment-guide-title">Set up Local virtual AP</h2>
+<p>These tests need two real accounts with separate test organizations and separate robots. Saving different organization IDs alone is not enough.</p>
+<p id="environment-access-warning" class="notice" role="status" hidden></p>
+<ol class="environment-steps">
+<li><strong>Keep A and B’s test organizations private from each other.</strong> A’s account must not be a member of B’s test organization, and B’s account must not be a member of A’s. Use dedicated test organizations with only the intended account as Developer or Owner. If both accounts already share an organization, choose an isolated test organization and enroll its test robot there.</li>
+<li><strong>Enroll one independent robot in each organization.</strong> In Stacks, start their virtual stacks. Each role needs its own robot UUID and enrolled Daemon. Check that each stack’s Robot ID matches the robot selected for that organization, and leave both robots idle.</li>
+<li><strong>Connect an account runner for each login.</strong> The panel connects <code>cdr</code> automatically. In Setup → Connect account, copy a fresh worker command into <code>ring1</code>’s own shell, using that account’s CLI login. Leave the shell running. The command connects the account to this panel; it does not launch a robot or start tests. Pairing codes expire after five minutes and work once.</li>
+<li><strong>Save the environment.</strong> Select Local virtual AP below, then open Configure IDs and runners. Set A to the publisher account and its organization/robot; set B to the other account and its organization/robot. Match runner labels and stack bindings. Set the API URL for this build and a registry prefix both sides can use. Save environment.</li>
+<li><strong>Run Preflight first, then start a new All campaign.</strong> Preflight checks the actual logged-in accounts, membership, robot ownership and readiness. Fix any pending prerequisites before running Live or All. After changing IDs or memberships, start a new campaign: existing campaigns keep their original targets and results.</li>
+<li><strong>Add extra roles when you need their coverage.</strong> C is a third robot in A’s organization and may use A’s runner. Operator is another account with Operator membership in A’s organization. A’s owner can create an Operator invitation code under Organizations → Invitations; the new account pastes it into Join organization. No email service is needed. Without them, those cases stay pending. Official publishing needs the configured official publisher; hosted/browser and other operator checks need recorded evidence.</li>
+</ol>
+<details class="environment-targets"><summary>Current saved targets</summary><div id="environment-guide-targets"></div></details>
+</section>
+<div class="campaign-layout"><aside class="panel"><h2>Test environment</h2><label>Saved environment<select id="environment-select"></select></label><div class="campaign-launch"><label>Checks<select id="campaign-scope"><option value="all">All · regression + live + operator gates</option><option value="preflight">Preflight · read only</option><option value="live">Live · multi-org and multi-robot</option><option value="regression">Regression · isolated services and browser fixtures</option></select></label><button id="launch-campaign" class="primary">Run campaign</button><p class="help">Live campaigns publish and run stationary disposable Apps on these exact targets. Start stacks in Stacks and connect account runners in Setup first.</p></div><details id="environment-editor" open><summary>Configure IDs and runners</summary><form id="environment-form">
+<label>Name<input id="environment-name" required value="Virtual AP environment"></label>
+<label>Build label<input id="environment-build" value="Local build" required></label>
+<label>API URL<input id="environment-api" type="url" value="http://localhost:8080" required></label>
+<label>Registry prefix<input id="environment-repository" value="127.0.0.1:5000/ringfour/acceptance" required></label>
+<label>Regression runner label<input id="environment-regression" list="runner-labels" placeholder="Usually the publisher runner"></label>
+<datalist id="runner-labels"></datalist><div id="environment-roles"></div>
+<details><summary>Additional evidence targets</summary><label class="check-label"><input id="environment-official" type="checkbox"> A is the configured official publisher</label><label>Robot Check preview entrypoint (optional)<input id="environment-entrypoint" placeholder="/absolute/path/to/main.py"></label><p class="help">Leave blank to test the pinned released template. A preview records the supplied file hash.</p></details>
+<button class="primary" type="submit">Save environment</button><span id="environment-saved" role="status"></span></form></details>
+</aside>
+<div><div id="campaign-history"></div></div></div></section>
+<section id="runs-page" hidden>
+<div class="run-layout"><aside class="panel launcher"><h2>Start a check</h2><p class="muted">Every run keeps its own logs and report.</p><form id="run-form"><label>Test profile<select id="profile"><option value="quick">Quick · component checks</option><option value="integration">Integration · disposable services</option><option value="full">Full · components, integration, browser</option><option value="preflight">Live preflight · read only</option><option value="live">Live · install and run test Apps</option></select></label><p id="profile-help" class="help"></p><label id="runner-field">Run as<select id="runner"></select></label><div id="target-summary" class="target-summary" hidden></div><button class="primary" id="start-run" type="submit">Run checks <span aria-hidden="true">↗</span></button></form><p class="footnote">Live runs use the targets saved in Setup. Platform and virtual stacks stay under operator control.</p></aside>
+<div><div class="section-heading"><h2>Run history</h2><span id="history-count" class="muted"></span></div><div id="history"></div></div></div>
+</section>
+<section id="setup-page" hidden>
+<div class="setup-layout"><div><section class="panel"><div class="section-heading"><div><h2>Connected accounts</h2><p class="muted">A worker uses the CLI login from its own shell.</p></div><button id="pair" type="button">Connect account</button></div><div id="pairing" hidden><p>Run this in the other account’s shell within five minutes:</p><pre id="pair-command"></pre><button id="copy-pair" type="button">Copy command</button></div><div id="workers"></div></section>
+<section class="panel"><div class="section-heading"><div><h2>Live test targets</h2><p class="muted">Choose a user, organization and robot for each side of the test.</p></div><button id="add-target" type="button">Add target</button></div><form id="setup-form"><div id="targets"></div><label>Registry repository prefix<input id="repository" autocomplete="off" placeholder="127.0.0.1:5000/ringfour/acceptance"></label><p class="help">Used for private test images. Each run gets a unique repository suffix.</p><button class="primary" type="submit">Save setup</button><span id="saved" role="status"></span></form></section></div>
+<aside class="panel guide"><p class="eyebrow">How it works</p><h2>One login per worker.</h2><p>Start the control room under your first account. Connect a worker from your second account’s shell.</p><p>The setup lists real users and IDs discovered through their own CLI sessions. Credentials stay with each account.</p><p>Choose the organization in that worker’s CLI before saving. Run a read-only preflight before a live workflow.</p><p>Existing Apps stay in place. Live cleanup uses only the run and installation IDs created by the test.</p></aside></div>
+</section>
+<section id="virtual-page">
+<div class="section-heading"><div><h2>Virtual stacks</h2><p class="muted">Each stack has its own runner, daemon and simulator. Rebuild images once, then Start or Restart stacks to use them. Starts reuse the shared images without building.</p></div><button id="add-stack" class="primary" type="button">Add stack</button></div>
+<div id="stack-cards" class="stack-grid"></div>
+</section>
+</main><footer><span>Ringfour / development</span><span>Passing checks provide evidence. Remaining human gates stay pending.</span></footer>
+</body></html>
